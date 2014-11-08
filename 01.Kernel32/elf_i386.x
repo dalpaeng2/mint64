@@ -8,6 +8,52 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x08048000)); . = SEGMENT_START("text-segment", 0x08048000) + SIZEOF_HEADERS;
+  /***************************************************************************/
+  /* 섹션 재배치로 인해 앞으로 이동 */
+  .text           :
+  {
+    *(.text.unlikely .text.*_unlikely .text.unlikely.*)
+    *(.text.exit .text.exit.*)
+    *(.text.startup .text.startup.*)
+    *(.text.hot .text.hot.*)
+    *(.text .stub .text.* .gnu.linkonce.t.*)
+    /* .gnu.warning sections are handled specially by elf32.em.  */
+    *(.gnu.warning)
+  }
+
+  .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
+  .rodata1        : { *(.rodata1) }
+
+  /* 데이터 영역의 시작을 섹터 단위로 맞춤 */
+  . = ALIGN (512);
+
+  .data           :
+  {
+    *(.data .data.* .gnu.linkonce.d.*)
+    SORT(CONSTRUCTORS)
+  }
+  .data1          : { *(.data1) }
+
+  __bss_start = .;
+  .bss            :
+  {
+   *(.dynbss)
+   *(.bss .bss.* .gnu.linkonce.b.*)
+   *(COMMON)
+   /* Align here to ensure that the .bss section occupies space up to
+      _end.  Align after .bss to ensure correct alignment even if the
+      .bss section disappears because there are no input sections.
+      FIXME: Why do we need it? When there is no .bss section, we don't
+      pad the .data section.  */
+   . = ALIGN(. != 0 ? 32 / 8 : 1);
+  }
+  . = ALIGN(32 / 8);
+  . = SEGMENT_START("ldata-segment", .);
+  . = ALIGN(32 / 8);
+  _end = .; PROVIDE (end = .);
+  /* 섹션 재배치로 인해 앞으로 이동 */
+  /***************************************************************************/
+
   .interp         : { *(.interp) }
   .note.gnu.build-id : { *(.note.gnu.build-id) }
   .hash           : { *(.hash) }
@@ -41,17 +87,8 @@ SECTIONS
   {
     KEEP (*(SORT_NONE(.init)))
   }
-  .plt            : { *(.plt) *(.iplt) }
-  .text           :
-  {
-    *(.text.unlikely .text.*_unlikely .text.unlikely.*)
-    *(.text.exit .text.exit.*)
-    *(.text.startup .text.startup.*)
-    *(.text.hot .text.hot.*)
-    *(.text .stub .text.* .gnu.linkonce.t.*)
-    /* .gnu.warning sections are handled specially by elf32.em.  */
-    *(.gnu.warning)
-  }
+  .plt            : { *(.plt) *(.iplt); }
+
   .fini           :
   {
     KEEP (*(SORT_NONE(.fini)))
@@ -59,8 +96,7 @@ SECTIONS
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
-  .rodata         : { *(.rodata .rodata.* .gnu.linkonce.r.*) }
-  .rodata1        : { *(.rodata1) }
+
   .eh_frame_hdr : { *(.eh_frame_hdr) }
   .eh_frame       : ONLY_IF_RO { KEEP (*(.eh_frame)) }
   .gcc_except_table   : ONLY_IF_RO { *(.gcc_except_table
@@ -133,31 +169,10 @@ SECTIONS
   .got            : { *(.got) *(.igot) }
   . = DATA_SEGMENT_RELRO_END (SIZEOF (.got.plt) >= 12 ? 12 : 0, .);
   .got.plt        : { *(.got.plt)  *(.igot.plt) }
-  .data           :
-  {
-    *(.data .data.* .gnu.linkonce.d.*)
-    SORT(CONSTRUCTORS)
-  }
-  .data1          : { *(.data1) }
+
   _edata = .; PROVIDE (edata = .);
   . = .;
-  __bss_start = .;
-  .bss            :
-  {
-   *(.dynbss)
-   *(.bss .bss.* .gnu.linkonce.b.*)
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.
-      FIXME: Why do we need it? When there is no .bss section, we don't
-      pad the .data section.  */
-   . = ALIGN(. != 0 ? 32 / 8 : 1);
-  }
-  . = ALIGN(32 / 8);
-  . = SEGMENT_START("ldata-segment", .);
-  . = ALIGN(32 / 8);
-  _end = .; PROVIDE (end = .);
+
   . = DATA_SEGMENT_END (.);
   /* Stabs debugging sections.  */
   .stab          0 : { *(.stab) }
