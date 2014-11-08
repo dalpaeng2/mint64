@@ -1,5 +1,6 @@
 #include "Types.h"
 #include "Page.h"
+#include "ModeSwitch.h"
 
 void kPrintString( int iX, int iY, const char * pcString );
 BOOL kInitializeKernel64Area( void );
@@ -7,6 +8,9 @@ BOOL kIsMemoryEnough( void );
 
 void Main( void )
 {
+  DWORD dwEAX, dwEBX, dwECX, dwEDX;
+  char vcVendorString[13] = {0, };
+
   kPrintString( 0, 3, "C Language Kernel Started...................[Pass]" );
 
   // 최소 메모리 크기를 만족하는 지 검사
@@ -38,6 +42,34 @@ void Main( void )
   kPrintString( 0, 6, "IA-32e Page Tables Initialize...............[    ]" );
   kInitializePageTables();
   kPrintString( 45, 6, "Pass" );
+
+  // 프로세서 제조사 정보 읽기
+  kReadCPUID( 0x00, &dwEAX, &dwEBX, &dwECX, &dwEDX );
+  *( DWORD * ) vcVendorString = dwEBX;
+  *( (DWORD * ) vcVendorString + 1 ) = dwEDX;
+  *( (DWORD * ) vcVendorString + 2 ) = dwECX;
+  kPrintString( 0, 7, "Processing Vendor String....................[             ]" );
+  kPrintString( 45, 7, vcVendorString );
+
+  // 64비트 지원 유무 확인
+  kReadCPUID( 0x80000001, &dwEAX, &dwEBX, &dwECX, &dwEDX );
+  kPrintString( 0, 8, "64bit Mode Support Check....................[    ]" );
+  if( dwEDX & ( 1 << 29 ) )
+  {
+    kPrintString( 45, 8, "Pass" );
+  }
+  else
+  {
+    kPrintString( 45, 8, "Fail" );
+    kPrintString( 0, 9, "This processor does not support 64bit mode~!!" );
+    while( 1 );
+  }
+
+  // IA-32e 모드로 전환
+  kPrintString( 0, 9, "Switch To IA-32e Mode" );
+
+  // IA-32e 모드 커널이 없으므로 지금은 주석 처리
+  // kSwitchAndExecute64bitKernal();
 
   while( 1 );
 }
