@@ -15,7 +15,7 @@ void kInitializePageTables( void )
   // 페이지 디렉터리 포인터 테이블의 기준 위치는 1MB + PML4TABLE(8byte * 512entry)
   kSetPageEntryData( &(pstPML4TEntry[0]), 0x00, 0x101000, PAGE_FLAGS_DEFAULT, 0 );
 
-  for( i = 0; i < PAGE_MAXENTRYCOUNT; i++ )
+  for( i = 1; i < PAGE_MAXENTRYCOUNT; i++ )
   {
     kSetPageEntryData( &(pstPML4TEntry[i]), 0, 0, 0, 0 );
   }
