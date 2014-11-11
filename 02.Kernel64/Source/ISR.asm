@@ -10,7 +10,8 @@ global kISRCoprocessorSegmentOverrun, kISRInvalidTSS, kISRSegmentNotPresent
 global kISRStackSegmentFault, kISRGeneralProtection, kISRPageFault, kISR15
 global kISRFPUError, kISRAlignmentCheck, kISRMachineCheck, kISRSIMDError, kISRETCException
 
-global kISRTimer, kISRKeyboard, kISRSlavePIC, kISRSerial2, kISRSerial1, kISRNotUsed2
+global kISRTimer, kISRKeyboard, kISRSlavePIC, kISRSerial2, kISRSerial1, kISRParallel2
+global kISRFloppy, kISRParallel1, kISRRTC, kISRReserved, kISRNotUsed1, kISRNotUsed2
 global kISRMouse, kISRCoprocessor, kISRHDD1, kISRHDD2, kISRETCInterrupt
 
 ; 콘텍스트를 저장하고 셀렉터를 교체하는 매크로

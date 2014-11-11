@@ -1,6 +1,7 @@
 #include "Types.h"
 #include "Keyboard.h"
 #include "Descriptor.h"
+#include "PIC.h"
 
 void kPrintString( int iX, int iY, const char * pcString );
 
@@ -41,6 +42,12 @@ void Main( void )
     while( 1 );
   }
 
+  kPrintString( 0, 16, "PIC Controller And Interrupt Initialized....[    ]" );
+  kInitializePIC();
+  kMaskPICInterrupt( 0 );
+  kEnableInterrupt();
+  kPrintString( 45, 16, "Pass" );
+
   while( 1 )
   {
     // 출력 버퍼가 차 있으면 스캔 코드를 읽을 수 있음
@@ -55,7 +62,7 @@ void Main( void )
         // 키가 눌러졌으면 ASCII 코드 값 화면에 출력
         if( bFlags & KEY_FLAGS_DOWN )
         {
-          kPrintString( i++, 16, vcTemp );
+          kPrintString( i++, 17, vcTemp );
 
           // 0이 입력되면 0으로 나누어 Divide Error 발생
           if( vcTemp[0] == '0' )

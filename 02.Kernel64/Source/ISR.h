@@ -34,7 +34,7 @@ void kISRParallel2( void );
 void kISRFloppy( void );
 void kISRParallel1( void );
 void kISRRTC( void );
-void kISReserved( void );
+void kISRReserved( void );
 void kISRNotUsed1( void );
 void kISRNotUsed2( void );
 void kISRMouse( void );
