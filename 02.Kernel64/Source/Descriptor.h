@@ -76,7 +76,7 @@
 // IDT 테이블의 시작 어드레스
 #define IDT_STARTADDRESS              ( IDTR_STARTADDRESS + sizeof( IDTR ) )
 // IDT 테이블의 전체 크기
-#define IDT_TABLESIZE                 ( IDT_MAXENTRYCOUNT + sizeof( IDTENTRY ) )
+#define IDT_TABLESIZE                 ( IDT_MAXENTRYCOUNT * sizeof( IDTENTRY ) )
 
 // IST의 시작 어드레스
 #define IST_STARTADDRESS              0x700000
