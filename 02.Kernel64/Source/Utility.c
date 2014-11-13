@@ -1,4 +1,5 @@
 #include "Utility.h"
+#include "AssemblyUtility.h"
 
 void kMemSet( void * pvDestination, BYTE bData, int iSize )
 {
@@ -36,4 +37,26 @@ int kMemCmp( const void * pvDestination, const void * pvSource, int iSize )
     }
   }
   return 0;
+}
+
+BOOL kSetInterruptFlag( BOOL bEnableInterrupt )
+{
+  QWORD qwRFLAGS;
+
+  qwRFLAGS = kReadRFLAGS();
+  if( bEnableInterrupt == TRUE )
+  {
+    kEnableInterrupt();
+  }
+  else
+  {
+    kDisableInterrupt();
+  }
+
+  // 나중에 복원을 위해 이전 인터럽트 활성화 여부를 반환
+  if( qwRFLAGS & 0x0200 )
+  {
+    return TRUE;
+  }
+  return FALSE;
 }

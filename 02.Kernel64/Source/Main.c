@@ -11,6 +11,7 @@ void Main( void )
   BYTE bFlags;
   BYTE bTemp;
   int i = 0;
+  KEYDATA stData;
 
   kPrintString( 0, 10, "Switch To IA-32e Mode Success~!!" );
   kPrintString( 0, 11, "IA-32e C Language Kernel Start..............[Pass]" );
@@ -28,10 +29,10 @@ void Main( void )
   kLoadIDTR( IDTR_STARTADDRESS );
   kPrintString( 45, 14, "Pass" );
 
-  kPrintString( 0, 15, "Keyboard Activate...........................[    ]" );
+  kPrintString( 0, 15, "Keyboard Activate And Queue Initialize......[    ]" );
 
   // 키보드 활성화
-  if( kActivateKeyboard() == TRUE )
+  if( kInitializeKeyboard() == TRUE )
   {
     kPrintString( 45, 15, "Pass" );
     kChangeKeyboardLED( FALSE, FALSE, FALSE );
@@ -50,25 +51,16 @@ void Main( void )
 
   while( 1 )
   {
-    // 출력 버퍼가 차 있으면 스캔 코드를 읽을 수 있음
-    if( kIsOutputBufferFull() == TRUE )
+    if( kGetKeyFromKeyQueue( &stData ) == TRUE )
     {
-      // 출력 버퍼에서 스캔 코드를 읽어서 저장
-      bTemp = kGetKeyboardScanCode();
-
-      // 스캔 코드 => ASCII 코드, 눌림/떨어짐 정보
-      if( kConvertScanCodeToASCIICode( bTemp, &(vcTemp[0]), &bFlags ) == TRUE )
+      if( stData.bFlags & KEY_FLAGS_DOWN )
       {
-        // 키가 눌러졌으면 ASCII 코드 값 화면에 출력
-        if( bFlags & KEY_FLAGS_DOWN )
-        {
-          kPrintString( i++, 17, vcTemp );
+        vcTemp[0] = stData.bASCIICode;
+        kPrintString( i++, 17, vcTemp );
 
-          // 0이 입력되면 0으로 나누어 Divide Error 발생
-          if( vcTemp[0] == '0' )
-          {
-            bTemp = bTemp / 0;
-          }
+        if( vcTemp[0] == '0' )
+        {
+          bTemp = bTemp / 0;
         }
       }
     }

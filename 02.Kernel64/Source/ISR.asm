@@ -319,7 +319,7 @@ kISRKeyboard:
   KSAVECONTEXT
 
   mov  rdi, 33
-  call kCommonInterruptHandler
+  call kKeyboardHandler
 
   KLOADCONTEXT
   iretq
@@ -408,7 +408,7 @@ kISRReserved:
 kISRNotUsed1:
   KSAVECONTEXT
 
-  mov  rdi, 41
+  mov  rdi, 42
   call kCommonInterruptHandler
 
   KLOADCONTEXT

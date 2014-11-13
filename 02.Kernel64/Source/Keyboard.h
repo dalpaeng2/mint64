@@ -52,6 +52,8 @@
 #define KEY_F12                     0x9F
 #define KEY_PAUSE                   0xA0
 
+#define KEY_MAXQUEUECOUNT           100
+
 // 구조체
 #pragma pack( push, 1 )
 
@@ -60,8 +62,6 @@ typedef struct kKeyMappingEntryStruct
   BYTE bNormalCode;
   BYTE bCombinedCode;
 } KEYMAPPINGENTRY;
-
-#pragma pack( pop )
 
 typedef struct kKeyboardManagerStruct
 {
@@ -73,6 +73,15 @@ typedef struct kKeyboardManagerStruct
   BOOL bExtendedCodeIn;
   int iSkipCountForPause;
 } KEYBOARDMANAGER;
+
+typedef struct kKeyDataStruct
+{
+  BYTE bScanCode;
+  BYTE bASCIICode;
+  BYTE bFlags;
+} KEYDATA;
+
+#pragma pack( pop )
 
 BOOL kIsOutputBufferFull( void );
 BOOL kIsInputBufferFull( void );
@@ -87,5 +96,9 @@ BOOL kIsNumberPadScanCode( BYTE bScanCode );
 BOOL kIsUseCombinedCode( BOOL bScanCode );
 void UpdateCombinationKeyStatueAndLED( BYTE bScanCode );
 BOOL kConvertScanCodeToASCIICode( BYTE bScanCode, BYTE * pbASCIICode, BOOL * pbFlags );
+BOOL kInitializeKeyboard( void );
+BOOL kConvertScanCodeAndPutQueue( BYTE bScanCode );
+BOOL kGetKeyFromKeyQueue( KEYDATA * pstData );
+BOOL kWaitForACKAndPutOtherScanCode( void );
 
 #endif /* __KEYBOARD_H__ */
