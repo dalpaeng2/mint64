@@ -19,13 +19,13 @@ void kSetCursor( int iX, int iY )
 
   // CRTC 컨트롤 어드레스 레지스터(포트 0x3D4)에 0x0E를 전송하여
   // 상위 커서 위치 레지스터를 선택
-  kOutPortByte( VGA_PORT_INDEX, VGA_INDEX_LOWERCURSOR );
+  kOutPortByte( VGA_PORT_INDEX, VGA_INDEX_UPPERCURSOR );
   // CRTC 컨트롤 데이터 레지스터(포트 0x3D5)에 커서의 상위 바이트를 출력
   kOutPortByte( VGA_PORT_DATA, iLinearValue >> 8 );
 
   // CRTC 컨트롤 어드레스 레지스터(포트 0x3D4)에 0x0F를 전송하여
   // 하위 커서 위치 레지스터를 선택
-  kOutPortByte( VGA_PORT_INDEX, VGA_INDEX_UPPERCURSOR );
+  kOutPortByte( VGA_PORT_INDEX, VGA_INDEX_LOWERCURSOR );
   // CRTC 컨트롤 데이터 레지스터(포트 0x3D5)에 커서의 하위 바이트를 출력
   kOutPortByte( VGA_PORT_DATA, iLinearValue & 0xFF );
 
