@@ -38,6 +38,11 @@ void Main( void )
   kSetCursor( 45, iCursorY++ );
   kPrintf( "Pass\n" );
 
+  kPrintf( "Total RAM Size Check........................[    ]" );
+  kCheckTotalRAMSize();
+  kSetCursor( 45, iCursorY++ );
+  kPrintf( "Pass], Size = %d MB\n", kGetTotalRAMSize() );
+
   kPrintf( "Keyboard Activate And Queue Initialize......[    ]" );
 
   // 키보드 활성화
