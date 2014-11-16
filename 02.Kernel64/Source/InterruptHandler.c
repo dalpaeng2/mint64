@@ -2,6 +2,9 @@
 #include "PIC.h"
 #include "Keyboard.h"
 #include "Console.h"
+#include "Utility.h"
+#include "Task.h"
+#include "Descriptor.h"
 
 void kCommonExceptionHandler( int iVectorNumber, QWORD qwErrorCode )
 {
@@ -55,4 +58,31 @@ void kKeyboardHandler( int iVectorNumber )
   }
 
   kSendEOIToPIC( iVectorNumber - PIC_IRQSTARTVECTOR );
+}
+
+void kTimerHandler( int iVectorNumber )
+{
+  char vcBuffer[] = "[INT:  , ]";
+  static int g_iTimerInterruptCount = 0;
+
+  vcBuffer[5] = '0' + iVectorNumber / 10;
+  vcBuffer[6] = '0' + iVectorNumber % 10;
+
+  vcBuffer[8] = '0' + g_iTimerInterruptCount;
+  g_iTimerInterruptCount = ( g_iTimerInterruptCount + 1 ) % 10;
+  kPrintStringXY( 70, 0, vcBuffer );
+
+  // EOI 전송
+  kSendEOIToPIC( iVectorNumber - PIC_IRQSTARTVECTOR );
+
+  // 타이머 발생 횟수를 증가
+  g_qwTickCount++;
+
+  // 태스크가 사용한 프로세서의 시간을 줄임
+  kDecreaseProcessorTime();
+  // 프로세서가 사용할 수 있는 시간을 다 썼다면 태스크 전환 수행
+  if( kIsProcessorTimeExpired() == TRUE )
+  {
+    kScheduleInInterrupt();
+  }
 }

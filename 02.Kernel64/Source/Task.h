@@ -2,6 +2,7 @@
 #define __TASK_H__
 
 #include "Types.h"
+#include "List.h"
 
 // SS, RSP, RFLAGS, CS, RIP + ISR에서 저장하는 19개의 레지스터
 #define TASK_REGISTERCOUNT                      ( 5 + 19 )
@@ -32,6 +33,16 @@
 #define TASK_RSPOFFSET                          22
 #define TASK_SSOFFSET                           23
 
+#define TASK_TCBPOOLADDRESS                     0x800000
+#define TASK_MAXCOUNT                           1024
+
+#define TASK_STACKPOOLADDRESS                   ( TASK_TCBPOOLADDRESS + sizeof( TCB ) * TASK_MAXCOUNT )
+#define TASK_STACKSIZE                          8192
+
+#define TASK_INVALIDID                          0xFFFFFFFFFFFFFFFF
+
+#define TASK_PROCESSORTIME                      5
+
 #pragma pack( push, 1 )
 
 typedef struct kContextStruct
@@ -41,18 +52,59 @@ typedef struct kContextStruct
 
 typedef struct kTaskControlBlockStruct
 {
-  CONTEXT stContext;
+  // 다음 데이터의 위치와 ID
+  LISTLINK stLink;
 
-  QWORD qwID;
+  // 플래그
   QWORD qwFlags;
+
+  CONTEXT stContext;
 
   void * pvStackAddress;
   QWORD qwStackSize;
 } TCB;
 
+typedef struct kTCBPoolManagerStruct
+{
+  TCB * pstStartAddress;
+  int iMaxCount;
+  int iUseCount;
+
+  int iAllocatedCount;
+} TCBPOOLMANAGER;
+
+typedef struct kSchedulerStruct
+{
+  TCB * pstRunningTask;
+
+  int iProcessorTime;
+
+  LIST stReadyList;
+} SCHEDULER;
+
 #pragma pack( pop )
 
-void kSetUpTask( TCB * pstTCB, QWORD qwID, QWORD qwFlags, QWORD qwEntryPointAddress,
+////////////////////////////////////////////////////////////////////////////////
+// 태스크 풀과 태스크 관련
+////////////////////////////////////////////////////////////////////////////////
+void kInitializeTCBPool( void );
+TCB * kAllocateTCB( void );
+void kFreeTCB( QWORD qwID );
+TCB * kCreateTask( QWORD qwFlags, QWORD qwEntryPointAddress );
+void kSetUpTask( TCB * pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
                   void * pvStackAddress, QWORD qwStackSize );
+
+////////////////////////////////////////////////////////////////////////////////
+// 스케줄러 관련
+////////////////////////////////////////////////////////////////////////////////
+void kInitializeScheduler( void );
+void kSetRunningTask( TCB * pstTask );
+TCB * kGetRunningTask( void );
+TCB * kGetNextTaskToRun( void );
+void kAddTaskToReadyList( TCB * pstTask );
+void kSchedule( void );
+BOOL kScheduleInInterrupt( void );
+void kDecreaseProcessorTime( void );
+BOOL kIsProcessorTimeExpired( void );
 
 #endif /* __TASK_H__ */
