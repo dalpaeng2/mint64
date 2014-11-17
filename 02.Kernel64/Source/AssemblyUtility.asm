@@ -5,7 +5,7 @@ SECTION .text
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
 global kEnableInterrupt, kDisableInterrupt, kReadRFLAGS
 global kReadTSC
-global kSwitchContext
+global kSwitchContext, kHlt
 
 kInPortByte:
   push rdx
@@ -186,3 +186,9 @@ kSwitchContext:
   ; Context 자료구조에서 레지스터를 복원
   KLOADCONTEXT
   iretq
+
+; 프로세서를 쉬게 함
+kHlt:
+  hlt
+  hlt
+  ret
