@@ -2,6 +2,7 @@
 #include "AssemblyUtility.h"
 #include "Keyboard.h"
 #include "Queue.h"
+#include "Synchronization.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // 키보드 컨트롤러와 키보드 제어에 관련된 함수
@@ -560,9 +561,13 @@ BOOL kConvertScanCodeAndPutQueue( BYTE bScanCode )
 
   if( kConvertScanCodeToASCIICode( bScanCode, &( stData.bASCIICode ), &( stData.bFlags ) ) == TRUE )
   {
-    bPreviousInterrupt = kSetInterruptFlag( FALSE );
+    // 임계 영역 시작
+    bPreviousInterrupt = kLockForSystemData();
+
     bResult = kPutQueue( &gs_stKeyQueue, &stData );
-    kSetInterruptFlag( bPreviousInterrupt );
+
+    // 임계 영역 끝
+    kUnlockForSystemData( bPreviousInterrupt );
   }
 
   return bResult;
@@ -573,14 +578,13 @@ BOOL kGetKeyFromKeyQueue( KEYDATA * pstData )
   BOOL bResult;
   BOOL bPreviousInterrupt;
 
-  if( kIsQueueEmpty( &gs_stKeyQueue ) == TRUE )
-  {
-    return FALSE;
-  }
+  // 임계 영역 시작
+  bPreviousInterrupt = kLockForSystemData();
 
-  bPreviousInterrupt = kSetInterruptFlag( FALSE );
   bResult = kGetQueue( &gs_stKeyQueue, pstData );
-  kSetInterruptFlag( bPreviousInterrupt );
+
+  // 임계 영역 끝
+  kUnlockForSystemData( bPreviousInterrupt );
 
   return bResult;
 }
