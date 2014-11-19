@@ -53,11 +53,16 @@
 #define TASK_FLAGS_WAIT                         0xFF
 
 #define TASK_FLAGS_ENDTASK                      0x8000000000000000
+#define TASK_FLAGS_SYSTEM                       0x4000000000000000
+#define TASK_FLAGS_PROCESS                      0x2000000000000000
+#define TASK_FLAGS_THREAD                       0x1000000000000000
 #define TASK_FLAGS_IDLE                         0x0800000000000000
 
 #define GETPRIORITY( x )                        ( ( x ) & 0xFF )
 #define SETPRIORITY( x, priority )              ( ( x ) = ( ( x ) & 0xFFFFFFFFFFFFFF00 ) | ( priority ) )
 #define GETTCBOFFSET( x )                       ( ( x ) & 0xFFFFFFFF )
+
+#define GETTCBFROMTHREADLINK( x )               ( TCB * ) ( ( QWORD ) ( x ) - offsetof( TCB, stThreadLink ) )
 
 #pragma pack( push, 1 )
 
@@ -73,6 +78,19 @@ typedef struct kTaskControlBlockStruct
 
   // 플래그
   QWORD qwFlags;
+
+  // 프로세스 메모리 영역의 시작과 크기
+  void * pvMemoryAddress;
+  QWORD qwMemorySize;
+
+  ///////////////////////////////
+  // 스레드 정보
+  ///////////////////////////////
+  LISTLINK stThreadLink;
+
+  LIST stChildThreadList;
+
+  QWORD qwParentProcessID;
 
   CONTEXT stContext;
 
@@ -114,7 +132,8 @@ typedef struct kSchedulerStruct
 static void kInitializeTCBPool( void );
 static TCB * kAllocateTCB( void );
 static void kFreeTCB( QWORD qwID );
-TCB * kCreateTask( QWORD qwFlags, QWORD qwEntryPointAddress );
+TCB * kCreateTask( QWORD qwFlags, void * pvMemoryAddress, QWORD qwMemorySize,
+                   QWORD qwEntryPointAddress );
 static void kSetUpTask( TCB * pstTCB, QWORD qwFlags, QWORD qwEntryPointAddress,
                   void * pvStackAddress, QWORD qwStackSize );
 
@@ -139,6 +158,7 @@ int kGetTaskCount( void );
 TCB * kGetTCBInTCBPool( int iOffset );
 BOOL kIsTaskExist( QWORD qwID );
 QWORD kGetProcessorLoad( void );
+static TCB * kGetProcessByThread( TCB * pstThread );
 
 ////////////////////////////////////////////////////////////////////////////////
 // 유휴 태스크 관련

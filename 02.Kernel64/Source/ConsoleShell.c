@@ -28,6 +28,7 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
   { "killtask", "End Task, ex)killtask 1(ID) or 0xffffffff(All Taks)", kKillTask },
   { "cpuload", "Show Processor Load", kCPULoad },
   { "testmutex", "Test Mutex Function", kTestMutex },
+  { "testthread", "Test Thread And Process Function", kTestThread },
 };
 
 //==============================================================================
@@ -475,7 +476,7 @@ static void kCreateTestTask( const char * pcParameterBuffer )
   case 1:
     for( i = 0; i < kAToI( vcCount, 10 ); i++ )
     {
-      if( kCreateTask( TASK_FLAGS_LOW, ( QWORD ) kTestTask1 ) == NULL )
+      if( kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, ( QWORD ) kTestTask1 ) == NULL )
       {
         break;
       }
@@ -487,7 +488,7 @@ static void kCreateTestTask( const char * pcParameterBuffer )
   default:
     for( i = 0; i < kAToI( vcCount, 10 ); i++ )
     {
-      if( kCreateTask( TASK_FLAGS_LOW, ( QWORD ) kTestTask2 ) == NULL )
+      if( kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, ( QWORD ) kTestTask2 ) == NULL )
       {
         break;
       }
@@ -554,8 +555,12 @@ static void kShowTaskList( const char * pcParameterBuffer )
         kPrintf( "\n" );
       }
 
-      kPrintf( "[%d] Task ID[0x%Q, Priority[%d], Flags[0x%Q]\n", 1 + iCount++,
-                pstTCB->stLink.qwID, GETPRIORITY( pstTCB->qwFlags ), pstTCB->qwFlags );
+      kPrintf( "[%d] Task ID[0x%Q], Priority[%d], Flags[0x%Q], Thread[%d]\n", 1 + iCount++,
+                pstTCB->stLink.qwID, GETPRIORITY( pstTCB->qwFlags ), pstTCB->qwFlags,
+                kGetListCount( &( pstTCB->stChildThreadList ) ) );
+      kPrintf( "   Parent PID[0x%Q], Memory Address[0x%Q], Size[0x%Q]\n",
+                   pstTCB->qwParentProcessID, pstTCB->pvMemoryAddress,
+                   pstTCB->qwMemorySize );
     }
   }
 }
@@ -583,24 +588,37 @@ static void kKillTask( const char * pcParameterBuffer )
   // 특정 ID만 종료하는 경우
   if( qwID != 0xFFFFFFFF )
   {
-    kPrintf( "Kill Task ID [0x%q] ", qwID );
-    if( kEndTask( qwID ) == TRUE )
+    pstTCB = kGetTCBInTCBPool( GETTCBOFFSET( qwID ) );
+    qwID = pstTCB->stLink.qwID;
+
+    // 시스템 테스크는 제외
+    if( ( ( qwID >> 32 ) != 0 ) && ( ( pstTCB->qwFlags & TASK_FLAGS_SYSTEM ) == 0x00 ) )
     {
-      kPrintf( "Success\n" );
+      kPrintf( "Kill Task ID [0x%q] ", qwID );
+      if( kEndTask( qwID ) == TRUE )
+      {
+        kPrintf( "Success\n" );
+      }
+      else
+      {
+        kPrintf( "Fail\n" );
+      }
     }
     else
     {
-      kPrintf( "Fail\n" );
+      kPrintf( "Task does not exist or task is system task\n" );
     }
   }
   // 콘솔 셸과 유휴 태스크를 제외하고 모든 태스크 종료
   else
   {
-    for( i = 2; i < TASK_MAXCOUNT; i++ )
+    for( i = 0; i < TASK_MAXCOUNT; i++ )
     {
       pstTCB = kGetTCBInTCBPool( i );
       qwID = pstTCB->stLink.qwID;
-      if( ( qwID >> 32 ) != 0 )
+
+      // 시스템 테스크는 삭제 목록에서 제외
+      if( ( ( qwID >> 32 ) != 0 ) && ( ( pstTCB->qwFlags & TASK_FLAGS_SYSTEM ) == 0x00 ) )
       {
         kPrintf( "Kill Task ID [0x%q] ", qwID );
         if( kEndTask( qwID ) == TRUE )
@@ -666,8 +684,40 @@ static void kTestMutex( const char * pcParameterBuffer )
 
   for( i = 0; i< 3; i++ )
   {
-    kCreateTask( TASK_FLAGS_LOW, ( QWORD ) kPrintNumberTask );
+    kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, ( QWORD ) kPrintNumberTask );
   }
   kPrintf( "Wait Until %d Task End...\n", i);
   kGetCh();
+}
+
+static void kCreateThreadTask( void )
+{
+  int i;
+
+  for( i = 0; i < 3; i++ )
+  {
+    kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, ( QWORD ) kTestTask2 );
+  }
+
+  while( 1 )
+  {
+    kSleep( 1 );
+  }
+}
+
+static void kTestThread( const char * pcParameterBuffer )
+{
+  TCB * pstProcess;
+
+  pstProcess = kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_PROCESS,
+                    ( void * ) 0xEEEEEEEE, 0x1000, ( QWORD ) kCreateThreadTask );
+
+  if( pstProcess != NULL )
+  {
+    kPrintf( "Process [0x%Q] Create Success\n", pstProcess->stLink.qwID );
+  }
+  else
+  {
+    kPrintf( "Process Create Fail\n" );
+  }
 }
