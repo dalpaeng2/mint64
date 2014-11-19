@@ -29,6 +29,8 @@ SHELLCOMMANDENTRY gs_vstCommandTable[] =
   { "cpuload", "Show Processor Load", kCPULoad },
   { "testmutex", "Test Mutex Function", kTestMutex },
   { "testthread", "Test Thread And Process Function", kTestThread },
+  { "showmatrix", "Show Matrix Screen", kShowMatrix },
+  { "testpie", "Test PIE Calculation", kTestPIE },
 };
 
 //==============================================================================
@@ -719,5 +721,151 @@ static void kTestThread( const char * pcParameterBuffer )
   else
   {
     kPrintf( "Process Create Fail\n" );
+  }
+}
+
+ static volatile QWORD gs_qwRandomValue = 0;
+
+QWORD kRandom( void )
+{
+  gs_qwRandomValue = ( gs_qwRandomValue * 412153 + 5571031 ) >> 16;
+  return gs_qwRandomValue;
+}
+
+static void kDropCharactorThread( void )
+{
+  int iX, iY;
+  int i;
+  char vcText[ 2 ] = { 0, };
+
+  iX = kRandom() % CONSOLE_WIDTH;
+
+  while( 1 )
+  {
+    kSleep( kRandom() % 20 );
+
+    if( ( kRandom() % 20 ) < 16 )
+    {
+      vcText[ 0 ] = ' ';
+      for( i = 0 ; i < CONSOLE_HEIGHT - 1 ; i++ )
+      {
+        kPrintStringXY( iX, i , vcText );
+        kSleep( 50 );
+      }
+    }
+    else
+    {
+      for( i = 0 ; i < CONSOLE_HEIGHT - 1 ; i++ )
+      {
+        vcText[ 0 ] = i + kRandom();
+        kPrintStringXY( iX, i, vcText );
+        kSleep( 50 );
+      }
+    }
+  }
+}
+
+static void kMatrixProcess( void )
+{
+  int i;
+
+  for( i = 0 ; i < 300 ; i++ )
+  {
+    if( kCreateTask( TASK_FLAGS_THREAD | TASK_FLAGS_LOW, 0, 0,
+                      ( QWORD ) kDropCharactorThread ) == NULL )
+    {
+      break;
+    }
+
+    kSleep( kRandom() % 5 + 5 );
+  }
+
+  kPrintf( "%d Thread is created\n", i );
+
+  kGetCh();
+}
+
+static void kShowMatrix( const char* pcParameterBuffer )
+{
+  TCB* pstProcess;
+
+  pstProcess = kCreateTask( TASK_FLAGS_PROCESS | TASK_FLAGS_LOW, ( void* ) 0xE00000, 0xE00000,
+                            ( QWORD ) kMatrixProcess );
+  if( pstProcess != NULL )
+  {
+    kPrintf( "Matrix Process [0x%Q] Create Success\n" );
+
+    while( ( pstProcess->stLink.qwID >> 32 ) != 0 )
+    {
+      kSleep( 100 );
+    }
+  }
+  else
+  {
+    kPrintf( "Matrix Process Create Fail\n" );
+  }
+}
+
+static void kFPUTestTask( void )
+{
+  double dValue1;
+  double dValue2;
+  TCB * pstRunningTask;
+  QWORD qwCount = 0;
+  QWORD qwRandomValue;
+  int i;
+  int iOffset;
+  char vcData[4] = { '-', '\\', '|', '/' };
+  CHARACTER * pstScreen = ( CHARACTER * ) CONSOLE_VIDEOMEMORYADDRESS;
+
+  pstRunningTask = kGetRunningTask();
+
+  iOffset = ( pstRunningTask->stLink.qwID & 0xFFFFFFFF ) * 2;
+  iOffset = CONSOLE_WIDTH * CONSOLE_HEIGHT - ( iOffset % ( CONSOLE_WIDTH * CONSOLE_HEIGHT ) );
+
+  while( 1 )
+  {
+    dValue1 = 1;
+    dValue2 = 1;
+
+    for( i = 0; i < 10; i++ )
+    {
+      qwRandomValue = kRandom();
+      dValue1 *= ( double ) qwRandomValue;
+      dValue2 *= ( double ) qwRandomValue;
+
+      kSleep( 1 );
+
+      qwRandomValue = kRandom();
+      dValue1 /= ( double ) qwRandomValue;
+      dValue2 /= ( double ) qwRandomValue;
+    }
+
+    if( dValue1 != dValue2 )
+    {
+      kPrintf( "Value is Not Same~!!! [%f] != [%f]\n", dValue1, dValue2 );
+      break;
+    }
+    qwCount++;
+
+    pstScreen[iOffset].bCharactor = vcData[qwCount % 4];
+    pstScreen[iOffset].bAttribute = ( iOffset % 15 ) + 1;
+  }
+}
+
+static void kTestPIE( const char * pcParameterBuffer )
+{
+  double dResult;
+  int i;
+
+  kPrintf( "PIE Calculation Test\n" );
+  kPrintf( "Result: 355 / 113 = " );
+  dResult = ( double ) 355 / 113;
+  kPrintf( "%d.%d%d\n", ( QWORD ) dResult, ( ( QWORD ) ( dResult * 10 ) % 10 ),
+            ( ( QWORD ) ( dResult * 100 ) % 10 ) );
+
+  for( i = 0; i < 100; i++ )
+  {
+    kCreateTask( TASK_FLAGS_LOW | TASK_FLAGS_THREAD, 0, 0, ( QWORD ) kFPUTestTask );
   }
 }

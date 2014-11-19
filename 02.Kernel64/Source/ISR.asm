@@ -3,7 +3,7 @@
 SECTION .text
 
 extern kCommonExceptionHandler, kCommonInterruptHandler, kKeyboardHandler
-extern kTimerHandler
+extern kTimerHandler, kDeviceNotAvailableHandler
 
 global kISRDivideError, kISRDebug, kISRNMI, kISRBreakPoint, kISROverflow
 global kISRBoundRangeExceeded, kISRInvalidOpcode, kISRDeviceNotAvailable, kISRDoubleFault
@@ -153,7 +153,7 @@ kISRDeviceNotAvailable:
   KSAVECONTEXT
 
   mov  rdi, 7
-  call kCommonExceptionHandler
+  call kDeviceNotAvailableHandler
 
   KLOADCONTEXT
   iretq
