@@ -7,6 +7,7 @@
 #include "Task.h"
 #include "PIT.h"
 #include "DynamicMemory.h"
+#include "HardDisk.h"
 
 void Main( void )
 {
@@ -79,6 +80,18 @@ void Main( void )
   kEnableInterrupt();
   kSetCursor( 45, iCursorY++ );
   kPrintf( "Pass\n" );
+
+  kPrintf( "HDD Initialize..............................[    ]" );
+  if( kInitializeHDD() == TRUE )
+  {
+    kSetCursor( 45, iCursorY++ );
+    kPrintf( "Pass\n" );
+  }
+  else
+  {
+    kSetCursor( 45, iCursorY++ );
+    kPrintf( "Fail\n" );
+  }
 
   // 유휴 태스크를 생성하고 shell을 시작
   kCreateTask( TASK_FLAGS_LOWEST | TASK_FLAGS_THREAD | TASK_FLAGS_SYSTEM | TASK_FLAGS_IDLE, 0, 0, ( QWORD ) kIdleTask );

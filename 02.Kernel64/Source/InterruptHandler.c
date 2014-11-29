@@ -6,6 +6,7 @@
 #include "Task.h"
 #include "Descriptor.h"
 #include "AssemblyUtility.h"
+#include "HardDisk.h"
 
 void kCommonExceptionHandler( int iVectorNumber, QWORD qwErrorCode )
 {
@@ -139,4 +140,28 @@ void kDeviceNotAvailableHandler( int iVectorNumber )
 
   // FPU를 사용한 태스크 ID를 현재 태스크로 변경
   kSetLastFPUUsedTaskID( pstCurrentTask->stLink.qwID );
+}
+
+void kHDDHandler( int iVectorNumber )
+{
+  char vcBuffer[] = "[INT:  , ]";
+  static int g_iHDDInterruptCount = 0;
+
+  vcBuffer[5] = '0' + iVectorNumber / 10;
+  vcBuffer[6] = '0' + iVectorNumber % 10;
+
+  vcBuffer[8] = '0' + g_iHDDInterruptCount;
+  g_iHDDInterruptCount = ( g_iHDDInterruptCount + 1 ) % 10;
+  kPrintStringXY( 10, 0, vcBuffer );
+
+  if( iVectorNumber - PIC_IRQSTARTVECTOR == 14 )
+  {
+    kSetHDDInterruptFlag( TRUE, TRUE );
+  }
+  else
+  {
+    kSetHDDInterruptFlag( FALSE, TRUE );
+  }
+
+  kSendEOIToPIC( iVectorNumber - PIC_IRQSTARTVECTOR );
 }
