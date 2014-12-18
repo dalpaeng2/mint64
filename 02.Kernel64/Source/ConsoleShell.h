@@ -58,5 +58,11 @@ static void kRandomAllocationTask( void );
 static void kShowHDDInformation( const char * pcParameterBuffer );
 static void kReadSector( const char * pcParameterBuffer );
 static void kWriteSector( const char * pcParameterBuffer );
+static void kMountHDD( const char * pcParameterBuffer );
+static void kFormatHDD( const char * pcParameterBuffer );
+static void kShowFileSystemInformation( const char * pcParameter );
+static void kCreateFileInRootDirectory( const char * pcParameter );
+static void kDeleteFileInRootDirectory( const char * pcParameter );
+static void kShowRootDirectory( const char * pcParameter );
 
 #endif /* __CONSOLESHELL_H__ */

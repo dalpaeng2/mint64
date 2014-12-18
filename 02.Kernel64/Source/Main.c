@@ -8,6 +8,7 @@
 #include "PIT.h"
 #include "DynamicMemory.h"
 #include "HardDisk.h"
+#include "FileSystem.h"
 
 void Main( void )
 {
@@ -83,6 +84,19 @@ void Main( void )
 
   kPrintf( "HDD Initialize..............................[    ]" );
   if( kInitializeHDD() == TRUE )
+  {
+    kSetCursor( 45, iCursorY++ );
+    kPrintf( "Pass\n" );
+  }
+  else
+  {
+    kSetCursor( 45, iCursorY++ );
+    kPrintf( "Fail\n" );
+  }
+
+  // 파일 시스템을 초기화
+  kPrintf( "File System Initialize......................[    ]" );
+  if( kInitializeFileSystem() == TRUE )
   {
     kSetCursor( 45, iCursorY++ );
     kPrintf( "Pass\n" );
